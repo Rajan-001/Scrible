@@ -1,4 +1,3 @@
-import React from 'react'
 import { useEffect, useRef, useState } from "react"
 import { useSocket } from "../Hook/Socket"
 import { useNavigate } from "react-router-dom"
@@ -39,6 +38,7 @@ import { FaCircleLeft, FaCircleRight } from "react-icons/fa6"
 export let  your_UserId=""
 
 
+
 export const LandingPage = () => {
   let index=10;
 
@@ -50,6 +50,8 @@ export const LandingPage = () => {
   const socket = useSocket()!
   const [username, setUsername] = useState()
   const [room, setRoom] = useState()
+
+
   const navigate = useNavigate()
   useEffect(() => {
     console.log(socket)
@@ -58,6 +60,7 @@ export const LandingPage = () => {
       socket.emit("connect room", {
         userId: username,
         roomId: room,
+        character:count
       })
       console.log("Connected to Room")
     }
@@ -71,6 +74,7 @@ function onSubmit() {
   return (
     <div className="h-screen w-screen bg-black">
       <div>
+  
         <div className="input-container justify-items-center items-center">
           <p className='text-white mt-10'>Select Your Character</p>
           <div className="justify-items-center text-4xl mt-8 text-center content-center place-items-center grid grid-cols-3">

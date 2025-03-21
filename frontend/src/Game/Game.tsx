@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useSocket } from "../Hook/Socket"
-import { your_UserId } from "../Page/Landing_Page";
+import { images, your_UserId } from "../Page/Landing_Page";
 
 export function Game() {
   const [letter, setLetter] = useState()
@@ -8,6 +8,7 @@ export function Game() {
   const [room,setRoomId]=useState({});
   const[users,setUsers]=useState()
   const[painter,setPainter]=useState()
+ 
   let players:[]=[]
   interface playerScore{
     userId:string,
@@ -17,7 +18,7 @@ export function Game() {
   const inputRef = useRef(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const socket = useSocket()!
-
+const [playerCharacter,setPlayerCharacter]=useState(0)
   useEffect(() => {
     
     const winner_score = 10
@@ -34,7 +35,8 @@ export function Game() {
    
     const ctx = c.getContext("2d")!
     socket.on("player-joined", (data) => {
-      const { roomId,user, word } = data
+      const { roomId,user, word,character } = data
+      setPlayerCharacter(character)
       console.log(socket.connected)
     console.log(`${data} player joined`)
     players=user
@@ -169,12 +171,17 @@ export function Game() {
   return (
     <div>
       <div>
-     
+     <div className="overflow-hidden justify-items-center">
       <canvas
         ref={canvasRef}
-        height={window.innerHeight}
-        width={window.innerWidth}
+        height={600}
+        width={1100}
+        className="border-2"
       ></canvas>
+      </div>
+      <div className="w-36 h-36 border-2  rounded-3xl color-white justify-items-center items-center place-content-center overflow-hidden">
+                <img src={images[playerCharacter]}    />
+            </div>
       {painter!==your_UserId  && <div className="relative">
         <div className="absolute right-10 bottom-10">
         <input ref={inputRef} onChange={checkingword}></input>

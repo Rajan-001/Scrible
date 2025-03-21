@@ -35,7 +35,7 @@ export const rooms: Room[] = []
 io.on("connection", (socket) => {
  
   socket.on("connect room", async (data) => {
-    const { userId, roomId } =data
+    const { userId, roomId,character } =data
 
     let user = rooms.find((x) => x.roomId === roomId)
 console.log(user)
@@ -64,7 +64,8 @@ console.log(user)
    data={
       roomId:roomId,
       user:user,
-      word:word
+      word:word,
+      character:character
     }
     socket.join(roomId)
     io.to(roomId).emit("player-joined",data)
