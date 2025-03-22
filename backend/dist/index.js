@@ -38,15 +38,15 @@ exports.app.use((0, cors_1.default)({
 exports.rooms = [];
 io.on("connection", (socket) => {
     socket.on("connect room", (data) => __awaiter(void 0, void 0, void 0, function* () {
-        const { userId, roomId } = data;
+        var _a;
+        const { userId, roomId, character } = data;
         let user = exports.rooms.find((x) => x.roomId === roomId);
-        console.log(user);
         if (user) {
-            const userDetail = { userId, ws: socket.id };
+            const userDetail = { userId, ws: socket.id, character };
             user.users.push(userDetail);
         }
         else {
-            const userDetail = { userId, ws: socket.id };
+            const userDetail = { userId, ws: socket.id, character };
             const newRoom = { users: [userDetail], roomId };
             yield exports.rooms.push(newRoom);
         }
@@ -64,13 +64,16 @@ io.on("connection", (socket) => {
             });
         }
         yield fetchWord();
+        socket.join(roomId);
+        const players = (_a = exports.rooms.find((x) => x.roomId === roomId)) === null || _a === void 0 ? void 0 : _a.users;
         data = {
             roomId: roomId,
             user: user,
-            word: word
+            word: word,
+            players: players
         };
-        socket.join(roomId);
         io.to(roomId).emit("player-joined", data);
+        console.log(`${JSON.stringify(players)} above one is user array`);
         if (round_count <= 3) {
             console.log(`started_Round ${exports.rooms} ${roomId} `);
             startround(exports.rooms, roomId, round_count);
@@ -83,12 +86,14 @@ io.on("connection", (socket) => {
                 console.log("Round completed Match over");
                 return;
             }
+            console.log(`Round count ${round_count}`);
             io.to(roomId).emit("start-round", { rooms, roomId });
             const painter = (_a = rooms.find((x) => x.roomId === roomId)) === null || _a === void 0 ? void 0 : _a.users[0];
             console.log(painter);
             const user_count = (_b = rooms.find((x) => x.roomId === roomId)) === null || _b === void 0 ? void 0 : _b.users.length;
             if (user_count && user_count >= 2) {
                 io.to(roomId).emit("painter", painter);
+                console.log(socket.on);
                 socket.on("sending-drawing", (data) => {
                     const painting = data;
                     console.log(painting);
@@ -103,6 +108,6 @@ io.on("connection", (socket) => {
         });
     }
 });
-server.listen(3002, () => {
+server.listen(3003, () => {
     console.log("Server is listening on port 3003");
 });

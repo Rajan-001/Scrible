@@ -26,6 +26,7 @@ app.use(
 interface userinfo {
   userId: string
   ws: String
+  character:number
 }
 export interface Room {
   users: userinfo[]
@@ -38,12 +39,11 @@ io.on("connection", (socket) => {
     const { userId, roomId,character } =data
 
     let user = rooms.find((x) => x.roomId === roomId)
-console.log(user)
     if (user) {
-      const userDetail: userinfo = { userId, ws: socket.id }
+      const userDetail: userinfo = { userId, ws: socket.id,character }
       user.users.push(userDetail)
     } else {
-      const userDetail: userinfo = { userId, ws: socket.id}
+      const userDetail: userinfo = { userId, ws: socket.id,character}
       const newRoom: Room = { users: [userDetail], roomId }
       await rooms.push(newRoom)
     }
@@ -61,15 +61,18 @@ console.log(user)
       console.log(word)
     }
     await fetchWord()
-   data={
+  
+   
+    socket.join(roomId)
+    const players=rooms.find((x) => x.roomId === roomId)?.users
+    data={
       roomId:roomId,
       user:user,
       word:word,
-      character:character
+      players:players
     }
-    socket.join(roomId)
     io.to(roomId).emit("player-joined",data)
-
+ console.log(`${JSON.stringify(players)} above one is user array`)
   if(round_count<=3){
     console.log(`started_Round ${rooms} ${roomId} `)
     startround(rooms,roomId,round_count)
@@ -81,6 +84,7 @@ console.log(user)
       console.log("Round completed Match over")
       return;
       }
+      console.log(`Round count ${round_count}`)
  io.to(roomId).emit("start-round",{rooms,roomId})
 
  const painter=rooms.find((x) => x.roomId === roomId)?.users[0];
@@ -89,6 +93,7 @@ console.log(user)
     if(user_count&&user_count>=2)
     {
       io.to(roomId).emit("painter",painter)
+      console.log(socket.on)
       socket.on("sending-drawing",(data)=>{
         const painting=data
         console.log(painting)
@@ -103,7 +108,7 @@ console.log(user)
     //   startround(rooms,roomId,user,round_count)
      }}
 })
-server.listen(3002, () => {
+server.listen(3003, () => {
   console.log("Server is listening on port 3003")
 })
 

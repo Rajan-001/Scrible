@@ -1,20 +1,25 @@
-import { createContext, ReactNode, useContext, useEffect, useRef } from "react"
-import { io, Socket } from "socket.io-client"
+import { createContext, ReactNode, useContext, useEffect,  useState } from "react";
+import { io, Socket } from "socket.io-client";
 
-const SocketContext = createContext<Socket | null>(null)
-export const useSocket = () => {
-  return useContext(SocketContext)
-}
+const SocketContext = createContext<Socket | null>(null);
+
+export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const socket = useRef<Socket | null>(null)
-  useEffect(() => {
-    socket.current = io("http://localhost:3002")
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  }, [])
+  useEffect(() => {
+    const newSocket = io("http://localhost:3003");
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
   return (
-    <SocketContext.Provider value={socket.current}>
+    <SocketContext.Provider value={socket}>
       {children}
     </SocketContext.Provider>
-  )
-}
+  );
+};

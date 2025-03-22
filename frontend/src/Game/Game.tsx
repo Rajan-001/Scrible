@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react"
 import { useSocket } from "../Hook/Socket"
 import { images, your_UserId } from "../Page/Landing_Page";
+import { LuPencil } from "react-icons/lu"
 
 export function Game() {
   const [letter, setLetter] = useState()
   const [score, setScore] = useState(0)
   const [room,setRoomId]=useState({});
-  const[users,setUsers]=useState()
+  const[users,setUsers]=useState([])
   const[painter,setPainter]=useState()
- 
-  let players:[]=[]
+ const[playerrooms,setPlayer]=useState([])
+
   interface playerScore{
     userId:string,
     score:number
@@ -18,7 +19,6 @@ export function Game() {
   const inputRef = useRef(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const socket = useSocket()!
-const [playerCharacter,setPlayerCharacter]=useState(0)
   useEffect(() => {
     
     const winner_score = 10
@@ -35,20 +35,21 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
    
     const ctx = c.getContext("2d")!
     socket.on("player-joined", (data) => {
-      const { roomId,user, word,character } = data
-      setPlayerCharacter(character)
+      const { roomId,user, word,players } = data
+      console.log(` player from socket ${players}`)
+      setPlayer(players)  
       console.log(socket.connected)
     console.log(`${data} player joined`)
-    players=user
+    setUsers(user)
     setRoomId(roomId)
       setLetter(word)
     })
-
+  console.log(`player joined user array ${users}`)
     socket.on("start-round",(data)=>{
       const {rooms,roomId}=data;
      
       setRoomId(roomId)
-      console.log(JSON.stringify(rooms))
+      console.log(`started   rounded`+JSON.stringify(rooms))
       // setUsers(room.data.users)
      socket.on("painter",(receieved_data)=>{
       setPainter(receieved_data.userId)
@@ -60,7 +61,7 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
         c.addEventListener("mousemove", handlemousemove)
         c.addEventListener("mouseup", handlemouseup)
         c.addEventListener("mousedown", handlemousedown)
-    console.log("drawing started")
+  
         function handlemousemove(event: MouseEvent) {
           if (isMouseDown) {
             drawLine(
@@ -119,7 +120,7 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
       ctx.moveTo(x0, y0)
       ctx.lineTo(x1, y1)
       ctx.strokeStyle = color
-      ctx.lineWidth = 2
+      ctx.lineWidth = 1
       ctx.stroke()
       ctx.closePath()
      
@@ -128,7 +129,6 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
       } else {
         const w = c.width
         const h = c.height
-   console.log("sending drawing")
         socket.emit("sending-drawing", {
           x0: x0 / w,
           y0: y0 / h,
@@ -136,7 +136,7 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
           y1: y1 / h,
           color,
         })
-       console.log(socket.connected)
+
       }
     }
    function onDrawingEvent({x0,y0,x1,y1,color}:{x0:number,y0:number,x1:number,y1:number,color:string}) {
@@ -159,7 +159,7 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
     console.log(result)
   })
 
-}, [socket,letter,painter])
+}, [painter])
 
  function checkingword(){
   if(inputRef.current.value===letter){
@@ -169,25 +169,42 @@ const [playerCharacter,setPlayerCharacter]=useState(0)
  }
  
   return (
-    <div>
+    <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden relative">
       <div>
-     <div className="overflow-hidden justify-items-center">
-      <canvas
-        ref={canvasRef}
-        height={600}
-        width={1100}
-        className="border-2"
-      ></canvas>
+          <div className="overflow-hidden justify-items-center border-1 mt-4">
+              <canvas
+                ref={canvasRef}
+                height={600}
+                width={1100}
+                className="border-2"
+              ></canvas>
+             </div>
+            
+
+             <div className="absolute left-8 top-8 w-36  ">
+             {playerrooms.map(({ userId, ws, character }: { userId: string; ws: string; character: number }) => (
+                  <div className="relative">
+                  <div key={userId} className="flex flex-col items-center grid grid-cols-5 ">
+                    <div className="w-14 h-20  mt-2 border-indigo-500 rounded-full flex justify-center items-center overflow-hidden col-span-4">
+                      <img className="rounded-3xl" src={images[character] || "/default.png"} alt={`Character ${character}`} />
+                    </div>
+                    <div className="text-indigo-500 text-base -ml-8 content-center col-span-1 ">
+                    {painter &&<LuPencil />}
+                      {userId}
+                    </div>
+                  </div>
+                  </div>
+                ))}               
+            </div> 
       </div>
-      <div className="w-36 h-36 border-2  rounded-3xl color-white justify-items-center items-center place-content-center overflow-hidden">
-                <img src={images[playerCharacter]}    />
-            </div>
-      {painter!==your_UserId  && <div className="relative">
-        <div className="absolute right-10 bottom-10">
-        <input ref={inputRef} onChange={checkingword}></input>
+      <div className="place-items-center absolute left-1/2 bottom-8 h-16"> 
+      {painter!==your_UserId  && <div className="relative justify-items-center -mt-4">
+        <div className="text-indigo-500"> Enter Word Here</div>
+        <div >
+        <input className="h-12 mt-2" ref={inputRef} onChange={checkingword}></input>
         </div>
         </div>}
-      </div>
+        </div>
     </div>
   )
 }
