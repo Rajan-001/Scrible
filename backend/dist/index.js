@@ -66,12 +66,14 @@ io.on("connection", (socket) => {
         yield fetchWord();
         socket.join(roomId);
         const players = (_a = exports.rooms.find((x) => x.roomId === roomId)) === null || _a === void 0 ? void 0 : _a.users;
+        const playersWithScore = yield players.map(player => (Object.assign(Object.assign({}, player), { score: 0 })));
         data = {
             roomId: roomId,
             user: user,
             word: word,
-            players: players
+            playersWithScore: playersWithScore
         };
+        console.log(data);
         io.to(roomId).emit("player-joined", data);
         console.log(`${JSON.stringify(players)} above one is user array`);
         if (round_count <= 3) {
@@ -100,6 +102,7 @@ io.on("connection", (socket) => {
                     io.to(roomId).emit("receiving-drawing", { painting });
                 });
                 socket.on("score-result", (data) => {
+                    console.log(`${data} Winner result`);
                     io.to(roomId).emit("final-score", { data });
                 });
                 //  round_count++;
@@ -108,6 +111,6 @@ io.on("connection", (socket) => {
         });
     }
 });
-server.listen(3003, () => {
+server.listen(3004, () => {
     console.log("Server is listening on port 3003");
 });

@@ -25,7 +25,7 @@ app.use(
 )
 interface userinfo {
   userId: string
-  ws: String
+  ws: string
   character:number
 }
 export interface Room {
@@ -64,13 +64,18 @@ io.on("connection", (socket) => {
   
    
     socket.join(roomId)
-    const players=rooms.find((x) => x.roomId === roomId)?.users
+    const players=rooms.find((x) => x.roomId === roomId)?.users!
+    const playersWithScore = await players.map(player => ({
+      ...player,
+      score: 0  
+    }));
     data={
       roomId:roomId,
       user:user,
       word:word,
-      players:players
+      playersWithScore:playersWithScore
     }
+    console.log(data)
     io.to(roomId).emit("player-joined",data)
  console.log(`${JSON.stringify(players)} above one is user array`)
   if(round_count<=3){
@@ -100,7 +105,7 @@ io.on("connection", (socket) => {
         io.to(roomId).emit("receiving-drawing",{painting})
       })
       socket.on("score-result",(data)=>{
-
+console.log(`${data} Winner result`)
         io.to(roomId).emit("final-score",{data})
         
       })
@@ -108,7 +113,7 @@ io.on("connection", (socket) => {
     //   startround(rooms,roomId,user,round_count)
      }}
 })
-server.listen(3003, () => {
+server.listen(3004, () => {
   console.log("Server is listening on port 3003")
 })
 

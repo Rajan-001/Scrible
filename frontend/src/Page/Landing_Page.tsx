@@ -40,13 +40,11 @@ export let  your_UserId=""
 
 
 export const LandingPage = () => {
-  let index=10;
 
   const userRef = useRef(null)
   const roomRef = useRef(null)
  const [count,setCount]=useState(7)
- 
- const imageRef=useRef(null);
+
   const socket = useSocket()!
   const [username, setUsername] = useState()
   const [room, setRoom] = useState()

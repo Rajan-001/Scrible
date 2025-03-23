@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { useSocket } from "../Hook/Socket"
 import { images, your_UserId } from "../Page/Landing_Page";
 import { LuPencil } from "react-icons/lu"
+import WinningPage from "./Winner";
 
 export function Game() {
   const [letter, setLetter] = useState()
@@ -10,18 +11,12 @@ export function Game() {
   const[users,setUsers]=useState([])
   const[painter,setPainter]=useState()
  const[playerrooms,setPlayer]=useState([])
-
-  interface playerScore{
-    userId:string,
-    score:number
-  }
-  const scoreTable:playerScore[]=[]
+ const [Winner,SetWinner]=useState();
   const inputRef = useRef(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const socket = useSocket()!
   useEffect(() => {
-    
-    const winner_score = 10
+
     let startX = 0
     let startY = 0
     const color = "white"
@@ -35,9 +30,9 @@ export function Game() {
    
     const ctx = c.getContext("2d")!
     socket.on("player-joined", (data) => {
-      const { roomId,user, word,players } = data
-      console.log(` player from socket ${players}`)
-      setPlayer(players)  
+      const { roomId,user, word,playersWithScore } = data
+      console.log(` player from socket ${playersWithScore}`)
+      setPlayer(playersWithScore)  
       console.log(socket.connected)
     console.log(`${data} player joined`)
     setUsers(user)
@@ -154,22 +149,32 @@ export function Game() {
     }
  
   })
-  socket.on("final-score",(data)=>{
-    const result=data;
-    console.log(result)
-  })
 
 }, [painter])
 
- function checkingword(){
-  if(inputRef.current.value===letter){
-  scoreTable.push({painter,score})
-  socket?.emit("score-result",{scoreTable})
+function checkingword() {
+  if (inputRef.current?.value === letter) {
+    if (playerrooms) {
+      const updatedPlayers = playerrooms.map(player =>
+        player.userId === your_UserId ? { ...player, score: player.score + 50 } : player
+      );
+
+      socket.emit("score-result", { updatedPlayers });
+    }
+
+    socket.on("final-score", (data) => {
+      const result = data.data.updatedPlayers;
+      let winner = result.reduce((max, player) => (player.score > max.score ? player : max), result[0]);
+
+      SetWinner(winner); // Use state to update the winner
+    });
   }
- }
+}
+
  
   return (
-    <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden relative">
+    <>
+    {!Winner && <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden relative">
       <div>
           <div className="overflow-hidden justify-items-center border-1 mt-4">
               <canvas
@@ -182,7 +187,7 @@ export function Game() {
             
 
              <div className="absolute left-8 top-8 w-36  ">
-             {playerrooms.map(({ userId, ws, character }: { userId: string; ws: string; character: number }) => (
+             { playerrooms.map(({ userId, ws, character,score }: { userId: string; ws: string; character: number;score:number }) => (
                   <div className="relative">
                   <div key={userId} className="flex flex-col items-center grid grid-cols-5 ">
                     <div className="w-14 h-20  mt-2 border-indigo-500 rounded-full flex justify-center items-center overflow-hidden col-span-4">
@@ -205,6 +210,9 @@ export function Game() {
         </div>
         </div>}
         </div>
-    </div>
+    </div>}
+    {Winner && <WinningPage userId={Winner.userId} score={Winner.score} />}
+
+    </>
   )
 }
